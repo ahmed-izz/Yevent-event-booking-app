@@ -1,0 +1,213 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* =========================
+     * Helpers
+     * ========================= */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isNonEmptyString(v) {
+      return v is string && v.size() > 0;
+    }
+
+    function isValidUrl(v) {
+      return v is string && v.matches('^https?://.*');
+    }
+
+    // Popular ranking rules:
+    // - If popular == true  => popularRank must exist and be >= 1
+    // - If popular == false => popularRank must NOT exist
+    function isValidPopularRank(d) {
+      return (d.popular == true)
+        ? (('popularRank' in d)
+            && (d.popularRank is number)
+            && (d.popularRank >= 1)
+            && (d.popularRank <= 10000))
+        : (!('popularRank' in d));
+    }
+
+    function isValidEvent(d) {
+      return
+        d.keys().hasAll([
+          'title',
+          'eventDate',
+          'location',
+          'category',
+          'description',
+          'priceFromYER',
+          'imageUrl',
+          'popular',
+          'createdAt'
+        ]) &&
+
+        (d.title is string && d.title.size() >= 3 && d.title.size() <= 120) &&
+        (d.eventDate is timestamp) &&
+
+        isNonEmptyString(d.location) &&
+        isNonEmptyString(d.category) &&
+
+        (d.description is string && d.description.size() >= 10 && d.description.size() <= 2000) &&
+
+        (d.priceFromYER is number && d.priceFromYER >= 0) &&
+
+        isValidUrl(d.imageUrl) &&
+
+        (d.popular is bool) &&
+        (d.createdAt is timestamp) &&
+
+        // tiers: optional for legacy events, but if present must be a sane list
+        (!('tiers' in d) ||
+          (d.tiers is list && d.tiers.size() >= 1 && d.tiers.size() <= 10)) &&
+
+        // Enforce your manual ranking behavior
+        isValidPopularRank(d) &&
+
+        // Block legacy fields so they cannot come back
+        !('upcoming' in d) &&
+        !('dateText' in d);
+    }
+
+    function isValidCategory(d) {
+      return
+        d.keys().hasAll(['name', 'order', 'isActive', 'createdAt']) &&
+
+        (d.name is string && d.name.size() >= 2 && d.name.size() <= 40) &&
+        (d.order is number) &&
+        (d.isActive is bool) &&
+        (d.createdAt is timestamp) &&
+
+        (!('updatedAt' in d) || d.updatedAt is timestamp);
+    }
+
+    function isValidTicket(d) {
+      return
+        d.keys().hasAll([
+          'uid',
+          'purchaseId',
+          'eventId',
+          'eventTitle',
+          'eventImageUrl',
+          'eventDate',
+          'location',
+          'ticketType',
+          'unitPriceYER',
+          'buyerName',
+          'buyerEmail',
+          'buyerPhone',
+          'status',
+          'createdAt'
+        ]) &&
+
+        (d.uid is string && d.uid.size() > 0) &&
+        (d.purchaseId is string && d.purchaseId.size() > 0) &&
+        (d.eventId is string && d.eventId.size() > 0) &&
+        (d.eventTitle is string && d.eventTitle.size() >= 1 && d.eventTitle.size() <= 160) &&
+
+        // allow empty string or url
+        (d.eventImageUrl is string && (d.eventImageUrl.size() == 0 || isValidUrl(d.eventImageUrl))) &&
+
+        (d.eventDate is timestamp) &&
+        isNonEmptyString(d.location) &&
+
+        (d.ticketType is string && d.ticketType.size() >= 1 && d.ticketType.size() <= 40) &&
+        (d.unitPriceYER is number && d.unitPriceYER >= 0) &&
+
+        (d.buyerName is string && d.buyerName.size() >= 2 && d.buyerName.size() <= 80) &&
+        (d.buyerEmail is string && d.buyerEmail.size() >= 3 && d.buyerEmail.size() <= 120) &&
+        (d.buyerPhone is string && d.buyerPhone.size() >= 6 && d.buyerPhone.size() <= 30) &&
+
+        // keep your current behavior
+        (d.status == 'confirmed') &&
+
+        (d.createdAt is timestamp) &&
+
+        // optional fields (if you write them)
+        (!('ticketIndex' in d) || d.ticketIndex is number) &&
+        (!('ticketCount' in d) || d.ticketCount is number);
+    }
+
+    /* =========================
+     * Favorites
+     * ========================= */
+    match /users/{uid}/favorites/{eventId} {
+      // owner-only
+      allow read: if isSignedIn() && request.auth.uid == uid;
+
+      // create favorite doc (require server timestamp)
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasAll(['createdAt'])
+        && request.resource.data.createdAt == request.time;
+
+      // allow owner to remove favorite
+      allow delete: if isSignedIn() && request.auth.uid == uid;
+
+      // no updates needed
+      allow update: if false;
+    }
+
+    /* =========================
+     * Events
+     * ========================= */
+    match /events/{eventId} {
+      allow read: if true;
+
+      allow create: if isAdmin() && isValidEvent(request.resource.data);
+
+      allow update: if isAdmin()
+        && isValidEvent(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if isAdmin();
+    }
+
+    /* =========================
+     * Categories
+     * ========================= */
+    match /categories/{categoryId} {
+      allow read: if isAdmin() || resource.data.isActive == true;
+
+      allow create: if isAdmin() && isValidCategory(request.resource.data);
+
+      allow update: if isAdmin()
+        && isValidCategory(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if isAdmin();
+    }
+
+    /* =========================
+     * Tickets
+     * ========================= */
+    match /tickets/{ticketId} {
+      // Owner-only create, validated, and must use server request time
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && isValidTicket(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+
+      // Owner-only read (or admin)
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.uid == request.auth.uid);
+
+      // Admin-only modifications
+      allow update, delete: if isAdmin();
+    }
+
+    /* =========================
+     * Admins
+     * ========================= */
+    match /admins/{uid} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow write: if isAdmin();
+    }
+  }
+}

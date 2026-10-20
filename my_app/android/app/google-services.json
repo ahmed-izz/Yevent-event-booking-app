@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "405131816422",
+    "project_id": "yevent",
+    "storage_bucket": "yevent.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:405131816422:android:7473d786b3e07e53e97a27",
+        "android_client_info": {
+          "package_name": "com.yevent.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "405131816422-n6h5eqhm5euah0u2ppcgm84tg7mfm8rm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yevent.mobile",
+            "certificate_hash": "9035e46b62222aa4df38c52bf23685a1e98ae18d"
+          }
+        },
+        {
+          "client_id": "405131816422-g8q36bn1e17nvv9a1lf51vm5ihkji9db.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAk1hK1oMJA2YsRqbIquA-pwLQPFP6N9nA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "405131816422-g8q36bn1e17nvv9a1lf51vm5ihkji9db.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

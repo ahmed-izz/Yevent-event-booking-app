@@ -1,9 +1,12 @@
+# =========================
 # Miscellaneous
+# =========================
 *.class
 *.log
 *.pyc
 *.swp
 .DS_Store
+Thumbs.db
 .atom/
 .build/
 .buildlog/
@@ -12,34 +15,85 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# =========================
+# IntelliJ / Android Studio
+# =========================
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+# =========================
+# VS Code
+# (uncomment if you DON'T want to commit workspace settings)
+# =========================
 #.vscode/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# =========================
+# Flutter / Dart / Pub
+# =========================
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
-/coverage/
+build/
+coverage/
+**/doc/api/
+**/ios/Flutter/.last_build_id
 
-# Symbolication related
+# =========================
+# Symbolication / Obfuscation outputs
+# =========================
 app.*.symbols
-
-# Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# =========================
+# Firebase / tooling logs
+# =========================
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# =========================
+# Secrets / env files (DO NOT COMMIT)
+# =========================
+.env
+.env.*
+secrets/
+**/*serviceAccount*.json
+**/*service_account*.json
+
+# =========================
+# Android build artifacts / local config
+# =========================
+android/.gradle/
+android/local.properties
+
+# Signing keys (DO NOT COMMIT)
+android/key.properties
+**/*.jks
+**/*.keystore
+
+# Generated / build outputs
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+
+# (Optional) If you ever generate APK/AAB locally, do NOT commit them
+*.apk
+*.aab
+
+# =========================
+# iOS (if you ever add iOS later)
+# =========================
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/App.framework
+ios/Flutter/engine/
+ios/Runner/GeneratedPluginRegistrant.*

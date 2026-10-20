@@ -1,27 +1,23 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
     super.key,
     required this.text,
     required this.onPressed,
+    this.icon,
   });
 
   final String text;
   final VoidCallback? onPressed;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
+    return FilledButton.icon(
       onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        minimumSize: const Size.fromHeight(50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w800)),
+      icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 18),
+      label: Text(text),
     );
   }
 }
